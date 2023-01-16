@@ -1,3 +1,4 @@
+use sqlx::types::chrono::NaiveDateTime;
 use rocket::{Build, Rocket};
 use rocket::fairing::{self, AdHoc};
 use rocket::serde::{Deserialize, Serialize};
@@ -18,8 +19,8 @@ struct Message {
     text: String,
     font_color: Option<String>,
     font_family: Option<String>,
-    // created_at: chrono::NaiveDateTime,
-    // expires_at: chrono::NaiveDateTime
+    created_at: NaiveDateTime,
+    expires_at: NaiveDateTime
 }
 
 #[get("/")]
