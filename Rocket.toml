@@ -1,0 +1,2 @@
+[default.databases.fridge-door]
+url = "db/fridge-door.db"
