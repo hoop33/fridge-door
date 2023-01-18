@@ -1,4 +1,5 @@
 use rocket::fairing::{self, AdHoc};
+use rocket::response::status::Created;
 use rocket::serde::json::Json;
 use rocket::serde::{Deserialize, Serialize};
 use rocket::{Build, Rocket};
@@ -17,13 +18,36 @@ const DEFAULT_LIST_SINCE_ID: u32 = 0;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
 struct Message {
-    // #[serde(skip_deserializing, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_deserializing)]
     id: i64,
     text: String,
     font_color: Option<String>,
     font_family: Option<String>,
+    #[serde(skip_deserializing)]
     created_at: NaiveDateTime,
-    expires_at: NaiveDateTime,
+    expires_at: Option<NaiveDateTime>,
+}
+
+#[post("/", data = "<message>")]
+async fn create(mut db: Connection<Db>, message: Json<Message>) -> Result<Created<Json<Message>>> {
+    let result = sqlx::query!(
+        "insert into messages (text, font_color, font_family, expires_at) values (?, ?, ?, ?)",
+        message.text,
+        message.font_color,
+        message.font_family,
+        message.expires_at
+    )
+    .execute(&mut *db)
+    .await?;
+
+    // Would be really odd if reading the message we just created failed.
+    // If we got here, though, it got created, so still return 201 and the message as sent.
+    Ok(
+        Created::new("/").body(match read(db, result.last_insert_rowid()).await {
+            Ok(created) => created.unwrap_or(message),
+            Err(_) => message,
+        }),
+    )
 }
 
 #[get("/?<count>&<since_id>&<include_expired>")]
@@ -39,7 +63,7 @@ async fn list(
 
     let messages = sqlx::query_as!(
         Message,
-        "select * from messages where id > ? and (? = 1 or date('now') < expires_at) limit ?",
+        "select * from messages where id > ? and (expires_at is null or ? = 1 or date('now') < expires_at) limit ?",
         since_id,
         include_expired,
         count
@@ -48,6 +72,15 @@ async fn list(
     .await?;
 
     Ok(Json(messages))
+}
+
+#[get("/<id>")]
+async fn read(mut db: Connection<Db>, id: i64) -> Result<Option<Json<Message>>> {
+    let message = sqlx::query_as!(Message, "select * from messages where id = ?", id)
+        .fetch_one(&mut *db)
+        .await?;
+
+    Ok(Some(Json(message)))
 }
 
 async fn run_migrations(rocket: Rocket<Build>) -> fairing::Result {
@@ -68,6 +101,6 @@ pub fn stage() -> AdHoc {
         rocket
             .attach(Db::init())
             .attach(AdHoc::try_on_ignite("SQLx Migrations", run_migrations))
-            .mount("/messages", routes![list])
+            .mount("/messages", routes![create, list, read])
     })
 }
