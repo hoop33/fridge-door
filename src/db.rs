@@ -21,8 +21,6 @@ struct Message {
     #[serde(skip_deserializing)]
     id: i64,
     text: String,
-    font_color: Option<String>,
-    font_family: Option<String>,
     #[serde(skip_deserializing)]
     created_at: NaiveDateTime,
     expires_at: Option<NaiveDateTime>,
@@ -31,10 +29,8 @@ struct Message {
 #[post("/", data = "<message>")]
 async fn create(mut db: Connection<Db>, message: Json<Message>) -> Result<Created<Json<Message>>> {
     let result = sqlx::query!(
-        "insert into messages (text, font_color, font_family, expires_at) values (?, ?, ?, ?)",
+        "insert into messages (text, expires_at) values (?, ?)",
         message.text,
-        message.font_color,
-        message.font_family,
         message.expires_at
     )
     .execute(&mut *db)
