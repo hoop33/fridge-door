@@ -79,6 +79,15 @@ async fn read(mut db: Connection<Db>, id: i64) -> Result<Option<Json<Message>>> 
     Ok(Some(Json(message)))
 }
 
+#[delete("/<id>")]
+async fn delete(mut db: Connection<Db>, id: i64) -> Result<()> {
+    sqlx::query!("delete from messages where id = ?", id)
+        .execute(&mut *db)
+        .await?;
+
+    Ok(())
+}
+
 async fn run_migrations(rocket: Rocket<Build>) -> fairing::Result {
     match Db::fetch(&rocket) {
         Some(db) => match sqlx::migrate!("./migrations").run(&**db).await {
@@ -97,6 +106,6 @@ pub fn stage() -> AdHoc {
         rocket
             .attach(Db::init())
             .attach(AdHoc::try_on_ignite("SQLx Migrations", run_migrations))
-            .mount("/messages", routes![create, list, read])
+            .mount("/messages", routes![create, list, read, delete])
     })
 }
