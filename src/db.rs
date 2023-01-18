@@ -11,8 +11,8 @@ struct Db(sqlx::SqlitePool);
 
 type Result<T, E = rocket::response::Debug<sqlx::Error>> = std::result::Result<T, E>;
 
-const DEFAULT_QUERY_LIMIT: u32 = 20;
-const DEFAULT_QUERY_OFFSET: u32 = 0;
+const DEFAULT_LIST_COUNT: u32 = 20;
+const DEFAULT_LIST_SINCE_ID: u32 = 0;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(crate = "rocket::serde")]
@@ -26,23 +26,23 @@ struct Message {
     expires_at: NaiveDateTime,
 }
 
-#[get("/?<limit>&<offset>&<include_expired>")]
+#[get("/?<count>&<since_id>&<include_expired>")]
 async fn list(
     mut db: Connection<Db>,
-    limit: Option<u32>,
-    offset: Option<u32>,
+    count: Option<u32>,
+    since_id: Option<u32>,
     include_expired: Option<u32>,
 ) -> Result<Json<Vec<Message>>> {
-    let limit = limit.unwrap_or(DEFAULT_QUERY_LIMIT);
-    let offset = offset.unwrap_or(DEFAULT_QUERY_OFFSET);
+    let count = count.unwrap_or(DEFAULT_LIST_COUNT);
+    let since_id = since_id.unwrap_or(DEFAULT_LIST_SINCE_ID);
     let include_expired = include_expired.unwrap_or(0);
 
     let messages = sqlx::query_as!(
         Message,
         "select * from messages where id > ? and (? = 1 or date('now') < expires_at) limit ?",
-        offset,
+        since_id,
         include_expired,
-        limit
+        count
     )
     .fetch_all(&mut *db)
     .await?;
