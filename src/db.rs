@@ -28,11 +28,14 @@ struct Message {
 
 #[post("/", data = "<message>")]
 async fn create(mut db: Connection<Db>, message: Json<Message>) -> Result<Created<Json<Message>>> {
-    let result = sqlx::query!(
-        "insert into messages (text, expires_at) values (?, ?)",
-        message.text,
-        message.expires_at
-    )
+    let result = (match message.expires_at {
+        Some(_) => sqlx::query!(
+            "insert into messages (text, expires_at) values (?, ?)",
+            message.text,
+            message.expires_at
+        ),
+        None => sqlx::query!("insert into messages (text) values (?)", message.text),
+    })
     .execute(&mut *db)
     .await?;
 
