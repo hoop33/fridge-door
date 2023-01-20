@@ -1,11 +1,12 @@
-mod db;
-
 #[macro_use]
 extern crate rocket;
 
-use rocket::fs::{relative, FileServer};
-use rocket_cors::{AllowedOrigins, CorsOptions};
 use std::str::FromStr;
+
+use rocket::fs::FileServer;
+use rocket_cors::{AllowedOrigins, CorsOptions};
+
+mod db;
 
 #[get("/cors")]
 fn cors<'a>() -> &'a str {
@@ -28,7 +29,7 @@ fn rocket() -> _ {
 
     rocket::build()
         .mount("/", routes![cors])
-        .mount("/", FileServer::from(relative!("static")))
+        .mount("/", FileServer::from("/var/fridge-door/static")) // TODO: make this configurable
         .attach(cors)
         .attach(db::stage())
 }
