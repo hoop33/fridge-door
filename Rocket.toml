@@ -1,5 +1,5 @@
 [default.databases.fridge-door]
-url = "sqlite://db/fridge-door.db"
+url = "db/fridge-door.db"
 
 [release.databases.fridge-door]
 url = "sqlite:///var/fridge-door/fridge-door.db"
