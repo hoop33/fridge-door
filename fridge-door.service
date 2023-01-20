@@ -1,0 +1,10 @@
+[Unit]
+Description=Fridge Door
+After=multi-user.target
+
+[Service]
+Environment="ROCKET_CONFIG=/opt/fridge-door/Rocket.toml"
+ExecStart=/opt/fridge-door/fridge-door
+
+[Install]
+WantedBy=multi-user.target
