@@ -7,6 +7,10 @@ edition = "2021"
 version = "0.5.0-rc.2"
 features = ["json", "secrets"]
 
+[dependencies.rocket_cors]
+git = "https://github.com/lawliet89/rocket_cors"
+branch = "master"
+
 [dependencies.rocket_db_pools]
 version = "0.1.0-rc.2"
 features = ["sqlx_sqlite"]
