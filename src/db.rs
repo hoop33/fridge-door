@@ -82,6 +82,18 @@ async fn read(mut db: Connection<Db>, id: i64) -> Result<Option<Json<Message>>> 
     Ok(Some(Json(message)))
 }
 
+#[get("/random")]
+async fn random(mut db: Connection<Db>) -> Result<Option<Json<Message>>> {
+    let message = sqlx::query_as!(
+        Message,
+        "select * from messages where date('now') < expires_at order by random() limit 1"
+    )
+    .fetch_one(&mut *db)
+    .await?;
+
+    Ok(Some(Json(message)))
+}
+
 #[delete("/<id>")]
 async fn delete(mut db: Connection<Db>, id: i64) -> Result<()> {
     sqlx::query!("delete from messages where id = ?", id)
@@ -109,6 +121,6 @@ pub fn stage() -> AdHoc {
         rocket
             .attach(Db::init())
             .attach(AdHoc::try_on_ignite("SQLx Migrations", run_migrations))
-            .mount("/messages", routes![create, list, read, delete])
+            .mount("/messages", routes![create, list, read, delete, random])
     })
 }
