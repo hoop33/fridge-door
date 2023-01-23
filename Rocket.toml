@@ -1,3 +1,6 @@
+[default]
+static_dir = "../fridge-door-web/build"
+
 [default.databases.fridge-door]
 url = "db/fridge-door.db"
 
@@ -7,4 +10,4 @@ url = "sqlite:///var/fridge-door/fridge-door.db"
 [release]
 address = "0.0.0.0"
 port = 80
-
+static_dir = "/var/fridge-door/static"

@@ -27,9 +27,15 @@ fn rocket() -> _ {
         .to_cors()
         .unwrap();
 
-    rocket::build()
+    let rocket = rocket::build();
+    let static_dir: String = rocket
+        .figment()
+        .extract_inner("static_dir")
+        .unwrap_or("./static".to_string());
+
+    rocket
         .mount("/", routes![cors])
-        .mount("/", FileServer::from("/var/fridge-door/static")) // TODO: make this configurable
+        .mount("/", FileServer::from(static_dir))
         .attach(cors)
         .attach(db::stage())
 }

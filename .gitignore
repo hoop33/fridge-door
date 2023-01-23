@@ -144,5 +144,3 @@ Cargo.lock
 # Still haven't figured out how to handle sqlite database
 db/
 
-# Ignore the static files, for now
-static/
