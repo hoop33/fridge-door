@@ -96,9 +96,13 @@ async fn random(mut db: Connection<Db>) -> Result<Option<Json<Message>>> {
 
 #[delete("/<id>")]
 async fn delete(mut db: Connection<Db>, id: i64) -> Result<()> {
-    sqlx::query!("delete from messages where id = ?", id)
-        .execute(&mut *db)
-        .await?;
+    // Update the message to have an expiration date of now.
+    sqlx::query!(
+        "update messages set expires_at = date('now') where id = ?",
+        id
+    )
+    .execute(&mut *db)
+    .await?;
 
     Ok(())
 }
